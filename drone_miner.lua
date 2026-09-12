@@ -15,6 +15,12 @@ local SAFE_PWR  = 0.95    -- bis 95 % laden
 local VEIN      = 3       -- wie tief einer Erzader gefolgt wird
 local ACCEL     = 0.4
 
+-- >>> HIER EINTRAGEN (F3-Koordinaten aus dem Spiel) <<<
+-- START  = der Luftblock, in den du die Drohne setzt (beim Charger)
+-- HOPPER = der Hopper, in den die Diamanten sollen
+local START  = { x =   0, y = -59, z =   0 }
+local HOPPER = { x =   0, y = -60, z =   0 }
+
 -- Was gesammelt wird (Teilstring im Blocknamen)
 local WANTED    = { "diamond" }
 -- Was toedlich ist
@@ -38,6 +44,17 @@ local VEC = {
   [WEST]  = {-1,  0,  0 }, [EAST]  = { 1,  0,  0 },
 }
 local OPP = { [0]=1, [1]=0, [2]=3, [3]=2, [4]=5, [5]=4 }
+
+-- Abwurfpunkt relativ zum Start: ein Block ueber dem Hopper
+local DUMP = {
+  x = HOPPER.x - START.x,
+  y = HOPPER.y - START.y + 1,
+  z = HOPPER.z - START.z,
+}
+
+if DUMP.x == 0 and DUMP.y == 1 and DUMP.z == 0 then
+  error("START und HOPPER sind identisch - bitte Koordinaten eintragen", 0)
+end
 
 local pos    = { x = 0, y = 0, z = 0 }
 local trail  = { { 0, 0, 0 } }   -- Brotkrumen-Pfad zurueck nach Hause
@@ -155,11 +172,13 @@ end
 
 local function unload()
   d.setStatusText("abladen")
-  for i = 1, d.inventorySize() do
+  moveTo(DUMP.x, DUMP.y, DUMP.z)     -- ueber den Hopper fliegen
+  for i = 2, d.inventorySize() do    -- Slot 1 = Spitzhacke, nicht abwerfen
     d.select(i)
     d.drop(DOWN)
   end
-  d.select(1)
+  d.select(2)
+  moveTo(0, 0, 0)                    -- zurueck zum Charger
 end
 
 local function charge()
